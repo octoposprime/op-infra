@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: op-be-logging
+  namespace: octopos-prime
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: op-be-logging
+  template:
+    metadata:
+      labels:
+        app: op-be-logging
+    spec:
+      containers:
+        - name: op-be-logging
+          image: ghcr.io/octoposprime/op-be-logging:v1.0.0-test
+          env:
+          - name: TEST
+            value: "true"
+          imagePullPolicy: "Always"
+          ports:
+            - containerPort: 18080
+            - containerPort: 18000
+          livenessProbe: 
+            httpGet: 
+              path: /health
+              port: 18000 
+            initialDelaySeconds: 2
+            periodSeconds: 60
+          resources:
+            limits:
+              memory: 128Mi
+              cpu: "0.2"
+            requests:
+              memory: 16Mi
+              cpu: "0.01"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: op-be-logging
+  namespace: octopos-prime
+spec:
+  clusterIP: None
+  ports:
+  - port: 18080
+    targetPort: 18080
+    name: op-be-logging
+  selector:
+    app: op-be-logging

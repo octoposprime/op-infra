@@ -1,13 +1,4 @@
 apiVersion: v1
-kind: Secret
-metadata:
-  name: redis-secret
-type: Opaque
-data:
-  password: cmVkaXM=
-
----
-apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: redis-pv
@@ -19,7 +10,6 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   hostPath:
     path: "/mnt/data/redis"
-
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -31,7 +21,6 @@ spec:
   resources:
     requests:
       storage: 2Gi
-
 ---
 apiVersion: v1
 kind: Service
@@ -47,8 +36,6 @@ spec:
       nodePort: 30007
   selector:
     app: redis
-
-
 ---
 apiVersion: apps/v1
 kind: StatefulSet
