@@ -10,7 +10,7 @@ jobs:
       issues: write
     steps:
       - run: |
-          gh issue edit "$NUMBER" --add-project "$PROJECT" --add-label "$LABELS"
+          gh issue edit "$NUMBER" --add-project "$PROJECT" --add-label "$LABELS" --add-label "medium priority" --add-label "waiting topic"
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
           LABELS: ${{ secrets.REPO_TEAM }}
