@@ -1,0 +1,96 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mosquitto
+  labels:
+    app: mosquitto
+spec:
+  selector:
+    matchLabels:
+      app: mosquitto
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mosquitto
+    spec:
+      containers:
+        - image: eclipse-mosquitto:latest
+          name: mosquitto
+          ports:
+            - containerPort: 1883
+            - containerPort: 9001
+          volumeMounts:
+            - name: mosquitto-persistent-storage
+              mountPath: /mosquitto/data
+            - name: mosquitto-config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: mosquitto-password
+              mountPath: /mosquitto/config/passwd
+              subPath: passwd
+      volumes:
+        - name: mosquitto-persistent-storage
+          persistentVolumeClaim:
+            claimName: mq-pv-claim
+        - name: mosquitto-config
+          configMap:
+            name: mosquitto-config
+        - name: mosquitto-password
+          configMap:
+            name: mosquitto-password
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-config
+data:
+  mosquitto.conf : |
+    listener 1883
+    persistence true
+    persistence_location /mosquitto/data/
+    log_dest file /mosquitto/log/mosquitto.log
+    allow_anonymous false
+    password_file /mosquitto/config/passwd
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mosquitto-password
+data:
+  passwd: |
+    #username:password <--- 
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mq-pv-claim
+  labels:
+    app: mosquitto
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mosquitto
+  labels:
+    app: mosquitto
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+spec:
+  ports:
+    - port: 1883
+      targetPort: 1883
+      name: mqtt
+    - port: 9001
+      targetPort: 9001
+      name: wss
+  selector:
+    app: mosquitto
+  type: LoadBalancer
